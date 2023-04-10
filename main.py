@@ -4,8 +4,10 @@ from argparse import ArgumentParser
 import time
 from selenium.webdriver import Chrome
 from selenium.webdriver import ChromeOptions
+from selenium.webdriver.chrome.service import Service
 import requests
 from selenium.webdriver.common.by import By
+import concurrent.futures
 
 def readArgs():
 	parser = ArgumentParser()
@@ -13,23 +15,27 @@ def readArgs():
 	parser.add_argument("-s", "--scroll-times", dest="scroll", type=int, required=True, help="Number of page scrolls")
 
 	args = parser.parse_args()
+
 	return args
 
 
 def readConfig():
 	config = configparser.ConfigParser()
 	config.read('./config.cfg')
+
 	return config
 
 
 def getDriver():
-  cr_options = ChromeOptions()
-  cr_options.add_argument("--start-maximized")
-  cr_options.add_argument("--incognito")
-
-  driver = Chrome('./chromedriver.exe', options=cr_options)
-  print('Window size: ', driver.get_window_size())   
+  opts = ChromeOptions()
+  opts.add_argument("--start-maximized")
+  opts.add_argument("--incognito")
+  # opts.add_experimental_option("excludeSwitches", ['enable-automation', 'enable-logging'])
+  ser = Service(".\chromedriver.exe")
   
+  driver = Chrome(service=ser, options=opts)
+  print('Window size: ', driver.get_window_size()) 
+   
   return driver
 
 
@@ -62,20 +68,41 @@ def getImgUrls(query, scroll, driver):
 	return org_imgs
 
 
+def downloadImg(img, save_pth):
+	filename = img.split('/')[-1]
+
+	try:
+		with requests.get(img, stream=True) as r:	# The request will be processed as a stream rather than downloading the entire file at once
+			r.raise_for_status()	# If the HTTP request status code is not 200, an exception will be raised, otherwise the call will be ignored
+			with open(os.path.join(save_pth, filename), 'wb') as f:
+				for chunk in r.iter_content(chunk_size=8192):
+					if chunk:
+						f.write(chunk)
+	except requests.exceptions.HTTPError as e:
+		print(f'\n\033[31;1mHTTP error occurred: {e}\033[0m')
+	except requests.exceptions.Timeout as e:
+		print(f'\n\033[31;1mTimeout error occurred: {e}\033[0m')
+	except requests.exceptions.RequestException as e:
+		print(f'\n\033[31;1mError occurred: {e}\033[0m')
+
+
 def downloadFile(save_pth, org_imgs):
+	print(f'\033[32;1m[+] Start Download\033[0m')
 	total_size = len(org_imgs)
 	print('#img_urls: ', total_size)
-	for idx, org_img in enumerate(org_imgs, start=1):
-		filename = org_img.split('/')[-1]
-		try:
-			r = requests.get(org_img, stream=True,timeout=30)
-			with open(os.path.join(save_pth, filename), 'wb') as f:
-				for chunk in r.iter_content():
-					f.write(chunk)
-			print(f'\r\033[36;1m({idx}/{total_size}), {(idx/total_size)*100:.2f}%, Download Successful\033[0m', end='')
-		except Exception as e:
-			print(e)
-			print(f'\033[31;1mDownload failed\033[0m')
+
+	with concurrent.futures.ThreadPoolExecutor() as executor:
+		futures = list()
+		for org_img in org_imgs:
+			future = executor.submit(downloadImg, org_img, save_pth)	# Submit the image download task to the threaded pool via the `executor.submit method`
+			futures.append(future)
+		for idx, future in enumerate(concurrent.futures.as_completed(futures), start=1):	# Wait for all tasks to be completed
+			try:
+				future.result()	# When a picture is downloaded, the `future.result()` method will be called to get the result
+				print(f'\r\033[36;1m({idx}/{total_size}), {(idx/total_size)*100:.2f}%, Download Successful\033[0m', end='')
+			except Exception as e:
+				print('e: ', e)
+				print(f'\033[31;1mDownload failed\033[0m')
 	print()
 
 
@@ -99,11 +126,11 @@ if __name__=='__main__':
 	print('#Scroll: ', scroll)
 	print('-'*20)
 	org_imgs = getImgUrls(query, scroll, driver)
-	print(len(org_imgs))
 
 	print(f'\n\033[32;1m[+] Start Download\033[0m')
 	save_pth = os.path.join(save_pth, query.replace(' ', '_'))
-	if org_imgs!=0:
+	if len(org_imgs)!=0:
 		os.makedirs(save_pth, exist_ok=True)
+		print('#imgs: ', len(org_imgs))
 		downloadFile(save_pth, org_imgs)
-	print(f'\033[32;1m[+] Finish\033[0m')
+	print(f'\n\033[32;1m[+] Finish\033[0m')
