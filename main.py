@@ -1,42 +1,9 @@
 import os
-import configparser
-from argparse import ArgumentParser
 import time
-from selenium.webdriver import Chrome
-from selenium.webdriver import ChromeOptions
-from selenium.webdriver.chrome.service import Service
+from tools.tools import readArgs, readConfig, getDriver
 import requests
 from selenium.webdriver.common.by import By
 import concurrent.futures
-
-def readArgs():
-	parser = ArgumentParser()
-	parser.add_argument("-q", "--query", dest="query", type=str, required=True, help="Keyword you want to query")
-	parser.add_argument("-s", "--scroll-times", dest="scroll", type=int, required=True, help="Number of page scrolls")
-
-	args = parser.parse_args()
-
-	return args
-
-
-def readConfig():
-	config = configparser.ConfigParser()
-	config.read('./config.cfg')
-
-	return config
-
-
-def getDriver():
-  opts = ChromeOptions()
-  opts.add_argument("--start-maximized")
-  opts.add_argument("--incognito")
-  # opts.add_experimental_option("excludeSwitches", ['enable-automation', 'enable-logging'])
-  ser = Service(".\chromedriver.exe")
-  
-  driver = Chrome(service=ser, options=opts)
-  print('Window size: ', driver.get_window_size()) 
-   
-  return driver
 
 
 def getImgUrls(query, scroll, driver):
@@ -115,6 +82,7 @@ if __name__=='__main__':
 	print(f'\n\033[32;1m[+] Read Config\033[0m')
 	config = readConfig()
 	save_pth = config['conf']['save_pth']
+	print('save_pth: ', save_pth)
 
 	print(f'\n\033[32;1m[+] Get Driver\033[0m')
 	driver = getDriver()
