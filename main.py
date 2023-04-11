@@ -71,9 +71,7 @@ def downloadFile(save_pth, org_imgs):
 
 	with concurrent.futures.ThreadPoolExecutor() as executor:
 		futures = list()
-		for org_img in org_imgs:
-			future = executor.submit(downloadImg, org_img, save_pth)	# Submit the image download task to the threaded pool via the `executor.submit method`
-			futures.append(future)
+		futures = [executor.submit(downloadImg, org_img, save_pth) for org_img in org_imgs]	# Submit the image download task to the threaded pool via the `executor.submit method`
 		for idx, future in enumerate(concurrent.futures.as_completed(futures), start=1):	# Wait for all tasks to be completed
 			try:
 				future.result()	# When a picture is downloaded, the `future.result()` method will be called to get the result
