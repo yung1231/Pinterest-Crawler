@@ -13,7 +13,7 @@ def getImgUrls(query, scroll, driver):
 
 	for i in range(scroll):
 		print(f'\033[32;1m---> scroll: {i+1}\033[0m')
-		time.sleep(3)
+		time.sleep(5)
 		img_urls = driver.find_elements(By.XPATH, '//div[@class="PinCard__imageWrapper"]/div')
 		total_size = len(img_urls)
 		# print('#img_urls: ', total_size)
@@ -102,6 +102,7 @@ if __name__=='__main__':
 	print('#Scroll: ', scroll)
 	print('-'*20)
 	org_imgs = getImgUrls(query, scroll, driver)
+	driver.quit()
 
 	print(f'\n\033[32;1m[+] Start Download\033[0m')
 	save_pth = os.path.join(save_pth, query.replace(' ', '_'))
