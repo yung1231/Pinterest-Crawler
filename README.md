@@ -1,9 +1,5 @@
 # Pinterest Crawler for Image Downloads
-This is a python crawler designed to download images from `Pinterest`. The script uses the Selenium webdriver to automate scrolling through the Pinterest search results and retrieves the original image URLs. 
-
-The images are then downloaded using thread pool to enable faster downloads.
-
-The following formats are available for download：`jpg`、`png`、`gif`
+This is a python crawler designed to download images from `Pinterest`. It can search for and download images from `pin` or `name`. The script uses a headless Selenium driver to simulate a web browser to get the page source and then extract image URLs from the search )
 
 ## Installation
 1. Clone the repository & Install the required dependencies
@@ -15,7 +11,7 @@ pip install -r requirements.txt
 ```
 
 2. chromedriver
-   - Download the appropriate ChromeDriver for your system from the [official website](https://chromedriver.chromium.org/downloads)
+   - Download the Chrome Driver from [official website](https://chromedriver.chromium.org/downloads). Make sure to download the version that matches your Chrome browser version.
 
 ## Usage
 1. Modify the configuration file `config.cfg` to specify the download path for the images.
@@ -23,22 +19,28 @@ pip install -r requirements.txt
 2. Run the script `main.py` with the following command
 
 ```bash
-python main.py -q <query> -s <scroll>
+python main.py -tt <ttype> -s <search> -t <times>
 ```
 
 ### Using argument
 ```bash
-usage: main.py [-h] -q QUERY -s SCROLL
+usage: main.py [-h] -tt TTYPE -s SEARCH -t TIMES
 
 optional arguments:
   -h, --help            show this help message and exit
-  -q QUERY, --query QUERY
+  -tt TTYPE, --ttype TTYPE
+                        Search by 'pin' or 'name'(name is a string starting after @)
+  -s SEARCH, --search SEARCH
                         Keyword you want to query
-  -s SCROLL, --scroll-times SCROLL
+  -t TIMES, --times TIMES
                         Number of page scrolls
 ```
 
 ## Example
 ```bash
-python main.py -q "cute animals" -s 5
+python main.py -tt pin -s "cute animals" -t 5
 ```
+
+## Notes
+- The script currently supports downloading `.jpg`、`.png` and `.gif` images.
+- The script uses multithreading to speed up image downloading..
