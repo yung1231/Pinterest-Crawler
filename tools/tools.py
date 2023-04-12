@@ -1,14 +1,21 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 import configparser
 from selenium.webdriver import Chrome
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.service import Service
 from selenium_stealth import stealth
 
+def valid_input(value):
+	if value.lower() not in ['pin', 'name']:
+		raise ArgumentTypeError(f"Invalid input '{value}', must be 'pin' or 'name'")
+	return value
+
 def readArgs():
+	print(f'\n\033[32;1m[+] Read Args\033[0m')
 	parser = ArgumentParser()
-	parser.add_argument("-q", "--query", dest="query", type=str, required=True, help="Keyword you want to query")
-	parser.add_argument("-s", "--scroll-times", dest="scroll", type=int, required=True, help="Number of page scrolls")
+	parser.add_argument("-tt", "--ttype", dest="ttype", type=valid_input, required=True, help="Search by 'pin' or 'name'(name is a string starting after @)")
+	parser.add_argument("-s", "--search", dest="search", type=str, required=True, help="Keyword you want to query")
+	parser.add_argument("-t", "--times", dest="times", type=int, required=True, help="Number of page scrolls")
 
 	args = parser.parse_args()
 
@@ -16,12 +23,14 @@ def readArgs():
 
 
 def readConfig():
+	print(f'\n\033[32;1m[+] Read Config\033[0m')
 	config = configparser.ConfigParser()
 	config.read('./config.cfg')
 
 	return config
 
 def getDriver():
+	print(f'\n\033[32;1m[+] Get Driver\033[0m')
 	opts = ChromeOptions()
 	opts.add_argument("start-maximized")
 	opts.add_argument("disable-infobars")
