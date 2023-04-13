@@ -6,16 +6,16 @@ from selenium.webdriver.chrome.service import Service
 from selenium_stealth import stealth
 
 def valid_input(value):
-	if value.lower() not in ['pin', 'name']:
+	if value.lower() not in ['pin', 'name_created', 'name_saved']:
 		raise ArgumentTypeError(f"Invalid input '{value}', must be 'pin' or 'name'")
 	return value
 
 def readArgs():
 	print(f'\n\033[32;1m[+] Read Args\033[0m')
 	parser = ArgumentParser()
-	parser.add_argument("-tt", "--ttype", dest="ttype", type=valid_input, required=True, help="Search by 'pin' or 'name'(name is a string starting after @)")
+	parser.add_argument("-t", "--type", dest="ttype", type=valid_input, required=True, help="Search by 'pin' or 'name_created' or 'name_saved'(name is a string starting after @)")
 	parser.add_argument("-s", "--search", dest="search", type=str, required=True, help="Keyword you want to query")
-	parser.add_argument("-t", "--times", dest="times", type=int, required=True, help="Number of page scrolls")
+	# parser.add_argument("-t", "--times", dest="times", type=int, required=True, help="Number of page scrolls")
 
 	args = parser.parse_args()
 
