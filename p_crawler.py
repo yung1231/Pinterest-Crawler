@@ -5,27 +5,38 @@ from selenium.webdriver.common.by import By
 import concurrent.futures
 
 class PCrawler:
-  def __init__(self, ttype, save_pth, query, scroll, driver):
+  def __init__(self, ttype, save_pth, query, driver):
     print(f'\n\033[32;1m[+] Start Pinterest Crawler\033[0m')
     self.ttype = ttype
     self.save_pth = save_pth
     self.query = query
-    self.scroll = scroll
     self.driver = driver
     
+
   def getImgUrls(self, base_url):
+    print(f'\033[32;1m[+] Get Img Urls\033[0m')
     org_imgs = set()
     
     self.driver.get(base_url)
-
-    for i in range(self.scroll):
-      print(f'\033[32;1m---> scroll: {i+1}\033[0m')
+    pre_total = 0
+    cnt = 0
+    times = 1
+    while True:
+      # print(f'\033[32;1m---> scroll: {times}\033[0m')
       time.sleep(5)
       img_urls = self.driver.find_elements(By.XPATH, '//div[@class="PinCard__imageWrapper"]/div')
       total_size = len(img_urls)
+      if total_size == pre_total:
+        cnt+=1
+      else:
+        pre_total = total_size
+        cnt = 0
+      if cnt==4:
+        break
+
       if total_size!=0:
         for idx, img_url in enumerate(img_urls, start=1):
-          print(f'\r\033[36;1mProcessing ({idx}/{total_size}), {(idx/total_size)*100:.2f}%\033[0m', end='')
+          print(f'\r\033[36;1m---> scroll: {times}\tProcessing ({idx}/{total_size}), {(idx/total_size)*100:.2f}%\033[0m', end='')
           try:
             img_type = img_url.get_attribute('data-test-id').split('-')[1]
             img_url = img_url.find_element(By.XPATH, './/img')
@@ -34,12 +45,15 @@ class PCrawler:
             org_imgs.add(org_img)
           except Exception as e:
             pass
-        print()
-        self.driver.execute_script(f'window.scrollTo({i * 2000},{(i + 1) * 2000})')	# window.scrollTo(start, end): js method, Used to scroll the web page to the specified position
+        # print()
+        self.driver.execute_script(f'window.scrollTo({times * 2000},{(times + 1) * 2000})')	# window.scrollTo(start, end): js method, Used to scroll the web page to the specified position
+        times+=1
       else:
         print(f'\033[31;1mNot Found\033[0m')
         break
     
+    print('\n#org_imgs: ', len(org_imgs))
+    print()
     return org_imgs
 
 
@@ -72,6 +86,7 @@ class PCrawler:
 
 
   def downloadFile(self, save_pth, org_imgs):
+    print(f'\n\033[32;1m[+] Start Download\033[0m')
     total_size = len(org_imgs)
     print('#img_urls: ', total_size)
 
@@ -85,20 +100,52 @@ class PCrawler:
         except Exception as e:
           print(f'\033[31;1mDownload failed: {e}\033[0m')
     print()
+    print(f'\n\033[32;1m[+] Finish\033[0m')
+
+  def boardCards(self, base_url):
+    print(f'\n\033[32;1m[+] Get Board Cards\033[0m')
+    self.driver.get(base_url)
+    time.sleep(5)
+
+    board_card_urls = set()
+    for i in range(10):
+      try:
+        names = self.driver.find_elements(By.XPATH, '//div[@data-test-id="board-card"]/a')
+        for name in names:
+          href = name.get_attribute('href')
+          board_card_urls.add(href)
+        self.driver.execute_script(f'window.scrollTo({i * 2000},{(i + 1) * 2000})')
+      except:
+        break
+
+    print('#board_cards: ', len(board_card_urls))
+    return board_card_urls
 
 
   def startSearch(self):
     print(f'\n\033[32;1m[+] From Search\033[0m')
+    org_imgs = list()
     if self.ttype.lower()=='pin':
       base_url = f'https://www.pinterest.com/search/pins/?q={self.query}&rs=typed'
-    else:
+      org_imgs.append(self.getImgUrls(base_url))
+    elif self.ttype.lower()=='name_created':
       base_url = f'https://www.pinterest.com/{self.query}/_created/'
-    org_imgs = self.getImgUrls(base_url)
+      org_imgs.append(self.getImgUrls(base_url))
+    elif self.ttype.lower()=='name_saved':
+      base_url = f'https://www.pinterest.com/{self.query}/_saved/'
+      board_card_urls = self.boardCards(base_url)
+
+      total_size = len(board_card_urls)
+      for idx, board_card_url in enumerate(board_card_urls, start=1):
+        print(f'\033[36;1mboard card: {idx}\033[0m')
+        org_imgs.append(self.getImgUrls(board_card_url))
+        time.sleep(30)
+      print()
+
+    org_imgs = [img for org_img in org_imgs for img in org_img]
     self.driver.quit()
 
-    print(f'\n\033[32;1m[+] Start Download\033[0m')
     save_pth = os.path.join(self.save_pth, self.query.replace(' ', '_'))
     if len(org_imgs)!=0:
       os.makedirs(save_pth, exist_ok=True)
       self.downloadFile(save_pth, org_imgs)
-    print(f'\n\033[32;1m[+] Finish\033[0m')
