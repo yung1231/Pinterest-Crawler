@@ -1,5 +1,5 @@
 # Pinterest Crawler for Image Downloads
-This is a python crawler designed to download images from `Pinterest`. It can search for and download images from `pin` or `name`. The script uses a headless Selenium driver to simulate a web browser to get the page source and then extract image URLs from the search )
+This is a python crawler designed to download images from `Pinterest`. You can specify a search `query` or `username`, and the script will download all available images.
 
 ## Installation
 1. Clone the repository & Install the required dependencies
@@ -19,26 +19,24 @@ pip install -r requirements.txt
 2. Run the script `main.py` with the following command
 
 ```bash
-python main.py -tt <ttype> -s <search> -t <times>
+python main.py -t <ttype> -s <search>
 ```
 
 ### Using argument
 ```bash
-usage: main.py [-h] -tt TTYPE -s SEARCH -t TIMES
+usage: main.py [-h] -t TTYPE -s SEARCH
 
 optional arguments:
   -h, --help            show this help message and exit
-  -tt TTYPE, --ttype TTYPE
-                        Search by 'pin' or 'name'(name is a string starting after @)
+  -t TTYPE, --type TTYPE
+                        Search by 'pin' or 'name_created' or 'name_saved'(name is a string starting after @)
   -s SEARCH, --search SEARCH
                         Keyword you want to query
-  -t TIMES, --times TIMES
-                        Number of page scrolls
 ```
 
 ## Example
 ```bash
-python main.py -tt pin -s "cute animals" -t 5
+python main.py -t pin -s "Bocchi The Rock"
 ```
 
 ## Notes
